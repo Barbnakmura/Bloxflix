@@ -5,8 +5,8 @@
 
 // COLOQUE OS DADOS DO SEU PROJETO SUPABASE
 
-const SUPABASE_URL = "COLE_A_URL_DO_SEU_PROJETO";
-const SUPABASE_PUBLIC_KEY = "COLE_SUA_CHAVE_PUBLICA";
+const SUPABASE_URL = "https://qxxdchsqrovyshsbhrle.supabase.co";
+const SUPABASE_PUBLIC_KEY = "bloxflixadm";
 
 const BUCKET = "bloxflix-videos";
 
@@ -14,8 +14,7 @@ const BUCKET = "bloxflix-videos";
 // CONEXÃO
 // ==========================================
 
-const supabaseConfigured =
-  SUPABASE_URL.startsWith("https://qxxdchsqrovyshsbhrle") &&
+const supabaseConfigured = "https://qxxdchsqrovyshsbhrle.supabase.co") &&
   !SUPABASE_PUBLIC_KEY.startsWith("bloxflixadm");
 
 const db = supabaseConfigured
