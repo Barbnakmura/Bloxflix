@@ -1,31 +1,20 @@
-
-// ==========================================
-// BLOXFLIX — PAINEL ADMINISTRATIVO
-// ==========================================
-
-// COLOQUE OS DADOS DO SEU PROJETO SUPABASE
-
 const SUPABASE_URL = "https://qxxdchsqrovyshsbhrle.supabase.co";
-const SUPABASE_PUBLIC_KEY = "bloxflixadm";
+
+// COLE AQUI SUA PUBLISHABLE KEY REAL
+const SUPABASE_PUBLIC_KEY = "sb_publishable_hsuNE8Uf1YdZKZqQNtxlhA_H5mGrk9A";
 
 const BUCKET = "bloxflix-videos";
 
-// ==========================================
-// CONEXÃO
-// ==========================================
-
-const supabaseConfigured = "https://qxxdchsqrovyshsbhrle.supabase.co") &&
-  !SUPABASE_PUBLIC_KEY.startsWith("bloxflixadm");
+const supabaseConfigured =
+  SUPABASE_URL.startsWith("https://") &&
+  SUPABASE_PUBLIC_KEY.startsWith("sb_publishable_");
 
 const db = supabaseConfigured
   ? window.supabase.createClient(
       SUPABASE_URL,
       SUPABASE_PUBLIC_KEY
     )
-  : null;
-
-// ==========================================
-// ELEMENTOS
+  : null;// ELEMENTOS
 // ==========================================
 
 const loginPanel = document.getElementById("loginPanel");
