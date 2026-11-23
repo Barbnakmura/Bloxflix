@@ -15,8 +15,8 @@ const BUCKET = "bloxflix-videos";
 // ==========================================
 
 const supabaseConfigured =
-  SUPABASE_URL.startsWith("https://") &&
-  !SUPABASE_PUBLIC_KEY.startsWith("COLE_");
+  SUPABASE_URL.startsWith("https://qxxdchsqrovyshsbhrle") &&
+  !SUPABASE_PUBLIC_KEY.startsWith("bloxflixadm");
 
 const db = supabaseConfigured
   ? window.supabase.createClient(
