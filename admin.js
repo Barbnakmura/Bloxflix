@@ -1,15 +1,8 @@
-const SUPABASE_URL = "https://qxxdchsqrovyshsbhrle.supabase.co";
-
-// COLE AQUI SUA PUBLISHABLE KEY REAL
-const SUPABASE_PUBLIC_KEY = "sb_publishable_hsuNE8Uf1YdZKZqQNtxlhA_H5mGrk9A";
-
-const BUCKET = "bloxflix-videos";
-
 const supabaseConfigured =
   SUPABASE_URL.startsWith("https://") &&
   SUPABASE_PUBLIC_KEY.startsWith("sb_publishable_");
 
-const db = supabaseConfigured
+const db = supabaseConfigured && window.supabase
   ? window.supabase.createClient(
       SUPABASE_URL,
       SUPABASE_PUBLIC_KEY
@@ -90,27 +83,31 @@ if (!db) {
 loginForm.addEventListener("submit", async event => {
   event.preventDefault();
 
-  if (!db) {
-    showLoginMessage("Configure primeiro o Supabase.");
-    return;
-  }
+  showLoginMessage("Testando conexão...");
 
-  showLoginMessage("Entrando...");
+  try {
+    if (!db) {
+      throw new Error(
+        "Supabase não carregou. Verifique a conexão."
+      );
+    }
 
-  const { error } = await db.auth.signInWithPassword({
-    email: emailInput.value.trim(),
-    password: passwordInput.value
-  });
+    const { error } = await db.auth.signInWithPassword({
+      email: emailInput.value.trim(),
+      password: passwordInput.value
+    });
 
-  if (error) {
+    if (error) throw error;
+
+    showLoginMessage("Login realizado!");
+
+    await checkSession();
+
+  } catch (error) {
+    console.error("Erro no login:", error);
     showLoginMessage("Erro: " + error.message);
-    return;
   }
-
-  showLoginMessage("");
-  await checkSession();
 });
-
 // ==========================================
 // VERIFICAR SESSÃO
 // ==========================================
