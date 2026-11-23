@@ -1,3 +1,6 @@
+const SUPABASE_URL = "https://qxxdchsqrovyshsbhrle.supabase.co";
+const SUPABASE_PUBLIC_KEY = "SUA_CHAVE_PUBLICA";
+const BUCKET = "bloxflix-videos";
 const supabaseConfigured =
   SUPABASE_URL.startsWith("https://") &&
   SUPABASE_PUBLIC_KEY.startsWith("sb_publishable_");
