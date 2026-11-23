@@ -1,6 +1,14 @@
+
+// ==========================================
+// CONFIGURAÇÃO DO SUPABASE
+// ==========================================
+
 const SUPABASE_URL = "https://qxxdchsqrovyshsbhrle.supabase.co";
-const SUPABASE_PUBLIC_KEY = "SUA_CHAVE_PUBLICA";
+
+const SUPABASE_PUBLIC_KEY = "sb_publishable_hsuNE8Uf1YdZKZqQNtxlhA_H5mGrk9A";
+
 const BUCKET = "bloxflix-videos";
+
 const supabaseConfigured =
   SUPABASE_URL.startsWith("https://") &&
   SUPABASE_PUBLIC_KEY.startsWith("sb_publishable_");
@@ -10,7 +18,10 @@ const db = supabaseConfigured && window.supabase
       SUPABASE_URL,
       SUPABASE_PUBLIC_KEY
     )
-  : null;// ELEMENTOS
+  : null;
+
+// ==========================================
+// ELEMENTOS
 // ==========================================
 
 const loginPanel = document.getElementById("loginPanel");
@@ -75,7 +86,7 @@ if (!db) {
   if (setupNotice) {
     setupNotice.hidden = false;
     setupNotice.textContent =
-      "Configure a URL e a chave pública do Supabase no admin.js.";
+      "Supabase não carregou. Verifique a URL, a chave pública e a conexão.";
   }
 }
 
@@ -83,34 +94,37 @@ if (!db) {
 // LOGIN
 // ==========================================
 
-loginForm.addEventListener("submit", async event => {
-  event.preventDefault();
+if (loginForm) {
+  loginForm.addEventListener("submit", async event => {
+    event.preventDefault();
 
-  showLoginMessage("Testando conexão...");
+    showLoginMessage("Testando conexão...");
 
-  try {
-    if (!db) {
-      throw new Error(
-        "Supabase não carregou. Verifique a conexão."
-      );
+    try {
+      if (!db) {
+        throw new Error(
+          "Supabase não carregou. Verifique a configuração."
+        );
+      }
+
+      const { error } = await db.auth.signInWithPassword({
+        email: emailInput.value.trim(),
+        password: passwordInput.value
+      });
+
+      if (error) throw error;
+
+      showLoginMessage("Login realizado!");
+
+      await checkSession();
+
+    } catch (error) {
+      console.error("Erro no login:", error);
+      showLoginMessage("Erro: " + error.message);
     }
+  });
+}
 
-    const { error } = await db.auth.signInWithPassword({
-      email: emailInput.value.trim(),
-      password: passwordInput.value
-    });
-
-    if (error) throw error;
-
-    showLoginMessage("Login realizado!");
-
-    await checkSession();
-
-  } catch (error) {
-    console.error("Erro no login:", error);
-    showLoginMessage("Erro: " + error.message);
-  }
-});
 // ==========================================
 // VERIFICAR SESSÃO
 // ==========================================
@@ -139,20 +153,23 @@ async function checkSession() {
 // SAIR
 // ==========================================
 
-logoutButton.addEventListener("click", async () => {
-  if (!db) return;
+if (logoutButton) {
+  logoutButton.addEventListener("click", async () => {
+    if (!db) return;
 
-  const { error } = await db.auth.signOut();
+    const { error } = await db.auth.signOut();
 
-  if (error) {
-    showMessage(error.message, true);
-    return;
-  }
+    if (error) {
+      showMessage(error.message, true);
+      return;
+    }
 
-  loginPanel.hidden = false;
-  dashboard.hidden = true;
-  showLoginMessage("Você saiu da sua conta.");
-});
+    loginPanel.hidden = false;
+    dashboard.hidden = true;
+
+    showLoginMessage("Você saiu da sua conta.");
+  });
+}
 
 // ==========================================
 // ABAS DO PAINEL
@@ -191,7 +208,12 @@ async function uploadFile(file, folder) {
     throw new Error("Selecione um arquivo.");
   }
 
+  if (!db) {
+    throw new Error("Supabase não está conectado.");
+  }
+
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+
   const path = `${folder}/${crypto.randomUUID()}-${safeName}`;
 
   const { error } = await db.storage
@@ -201,9 +223,7 @@ async function uploadFile(file, folder) {
       upsert: false
     });
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 
   const { data } = db.storage
     .from(BUCKET)
@@ -216,77 +236,81 @@ async function uploadFile(file, folder) {
 // CADASTRAR FILME
 // ==========================================
 
-movieForm.addEventListener("submit", async event => {
-  event.preventDefault();
+if (movieForm) {
+  movieForm.addEventListener("submit", async event => {
+    event.preventDefault();
 
-  try {
-    showMessage("Enviando filme...");
+    try {
+      showMessage("Enviando filme...");
 
-    const file = movieFile.files[0];
+      const file = movieFile.files[0];
 
-    if (!file) {
-      throw new Error("Selecione o vídeo do filme.");
+      if (!file) {
+        throw new Error("Selecione o vídeo do filme.");
+      }
+
+      const videoUrl = await uploadFile(file, "filmes");
+
+      const { error } = await db
+        .from("titles")
+        .insert({
+          title: movieTitle.value.trim(),
+          description: movieDescription.value.trim(),
+          cover_url: movieCover.value.trim() || null,
+          kind: "movie",
+          video_url: videoUrl
+        });
+
+      if (error) throw error;
+
+      movieForm.reset();
+
+      showMessage("Filme cadastrado com sucesso!");
+
+      await loadTitles();
+
+    } catch (error) {
+      console.error(error);
+      showMessage("Erro: " + error.message, true);
     }
-
-    const videoUrl = await uploadFile(file, "filmes");
-
-    const { error } = await db
-      .from("titles")
-      .insert({
-        title: movieTitle.value.trim(),
-        description: movieDescription.value.trim(),
-        cover_url: movieCover.value.trim() || null,
-        kind: "movie",
-        video_url: videoUrl
-      });
-
-    if (error) throw error;
-
-    movieForm.reset();
-
-    showMessage("Filme cadastrado com sucesso!");
-
-    await loadTitles();
-
-  } catch (error) {
-    console.error(error);
-    showMessage("Erro: " + error.message, true);
-  }
-});
+  });
+}
 
 // ==========================================
 // CADASTRAR SÉRIE
 // ==========================================
 
-seriesForm.addEventListener("submit", async event => {
-  event.preventDefault();
+if (seriesForm) {
+  seriesForm.addEventListener("submit", async event => {
+    event.preventDefault();
 
-  try {
-    showMessage("Cadastrando série...");
+    try {
+      showMessage("Cadastrando série...");
 
-    const { error } = await db
-      .from("titles")
-      .insert({
-        title: seriesTitle.value.trim(),
-        description: seriesDescription.value.trim(),
-        cover_url: seriesCover.value.trim() || null,
-        kind: "series",
-        video_url: null
-      });
+      const { error } = await db
+        .from("titles")
+        .insert({
+          title: seriesTitle.value.trim(),
+          description: seriesDescription.value.trim(),
+          cover_url: seriesCover.value.trim() || null,
+          kind: "series",
+          video_url: null
+        });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    seriesForm.reset();
+      seriesForm.reset();
 
-    showMessage("Série cadastrada com sucesso!");
+      showMessage("Série cadastrada com sucesso!");
 
-    await loadTitles();
+      await loadTitles();
 
-  } catch (error) {
-    console.error(error);
-    showMessage("Erro: " + error.message, true);
-  }
-});
+    } catch (error) {
+      console.error(error);
+      showMessage("Erro: " + error.message, true);
+    }
+  });
+}
 
 // ==========================================
 // ATUALIZAR LISTA DE SÉRIES
@@ -312,53 +336,55 @@ async function loadSeriesOptions(titles) {
 // CADASTRAR EPISÓDIO
 // ==========================================
 
-episodeForm.addEventListener("submit", async event => {
-  event.preventDefault();
+if (episodeForm) {
+  episodeForm.addEventListener("submit", async event => {
+    event.preventDefault();
 
-  try {
-    showMessage("Enviando episódio...");
+    try {
+      showMessage("Enviando episódio...");
 
-    const file = episodeFile.files[0];
+      const file = episodeFile.files[0];
 
-    if (!file) {
-      throw new Error("Selecione o vídeo do episódio.");
+      if (!file) {
+        throw new Error("Selecione o vídeo do episódio.");
+      }
+
+      if (!episodeSeries.value) {
+        throw new Error("Selecione uma série.");
+      }
+
+      const videoUrl = await uploadFile(file, "episodios");
+
+      const { error } = await db
+        .from("episodes")
+        .insert({
+          series_id: episodeSeries.value,
+          season_number: Number(seasonNumber.value),
+          episode_number: Number(episodeNumber.value),
+          title: episodeTitle.value.trim(),
+          description: episodeDescription.value.trim(),
+          video_url: videoUrl
+        });
+
+      if (error) throw error;
+
+      episodeForm.reset();
+
+      showMessage("Episódio cadastrado com sucesso!");
+
+    } catch (error) {
+      console.error(error);
+      showMessage("Erro: " + error.message, true);
     }
-
-    if (!episodeSeries.value) {
-      throw new Error("Selecione uma série.");
-    }
-
-    const videoUrl = await uploadFile(file, "episodios");
-
-    const { error } = await db
-      .from("episodes")
-      .insert({
-        series_id: episodeSeries.value,
-        season_number: Number(seasonNumber.value),
-        episode_number: Number(episodeNumber.value),
-        title: episodeTitle.value.trim(),
-        description: episodeDescription.value.trim(),
-        video_url: videoUrl
-      });
-
-    if (error) throw error;
-
-    episodeForm.reset();
-
-    showMessage("Episódio cadastrado com sucesso!");
-
-  } catch (error) {
-    console.error(error);
-    showMessage("Erro: " + error.message, true);
-  }
-});
+  });
+}
 
 // ==========================================
 // LISTAR FILMES E SÉRIES
 // ==========================================
 
 async function loadTitles() {
-  if (!db) return;
+  if (!db || !titleList) return;
 
   titleList.innerHTML = "<p>Carregando títulos...</p>";
 
@@ -435,7 +461,9 @@ async function deleteTitle(id, title) {
 // ATUALIZAR LISTA
 // ==========================================
 
-refreshButton.addEventListener("click", loadTitles);
+if (refreshButton) {
+  refreshButton.addEventListener("click", loadTitles);
+}
 
 // ==========================================
 // INICIAR PAINEL
